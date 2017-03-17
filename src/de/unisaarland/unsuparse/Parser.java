@@ -178,7 +178,7 @@ public class Parser {
 			return null;
 		} else {
 			ConstituentTree mergedCons = new ConstituentTree(new ArrayList<ConstituentTree>(cons.subList(startIndex, startIndex + 2)));
-			Merge m = new Merge(mergedCons, startIndex, minSep);
+			Merge m = new Merge(mergedCons, startIndex);
 			return m;
 		}
 	}
@@ -248,7 +248,14 @@ public class Parser {
 					s.merge(m, false);
 					m = bestMerge(s, threshold, false);
 				}
-				parsed.add(s.getLast());
+				ConstituentTree c = s.getLast();
+				if (c.getSubConstituents() == null) {
+					ArrayList<ConstituentTree> newCons = new ArrayList<ConstituentTree>();
+					newCons.add(c);
+					parsed.add(new ConstituentTree(newCons));
+				} else {
+					parsed.add(s.getLast());
+				}
 			}
 		} else {
 			for (Sentence s : sents) {

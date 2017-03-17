@@ -12,8 +12,8 @@ import java.util.ArrayList;
 public class ConstituentTree {
 	private Label firstLabel;
 	private Label lastLabel;
-	private String text;
-	private String labelText;
+	private String text; // raw text spanned by the ConstituentTree
+	private String labelText; // a string with the label names of the ConstituentTree
 	private ArrayList<ConstituentTree> subConstituents; // the sub-constituents (or children) of this constituent
 	
 	/**

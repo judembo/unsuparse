@@ -46,10 +46,10 @@ public class Sentence {
 		ConstituentTree newCons = m.getCons();
 		if (safe) {
 			newCons.flatten();
+			newCons.getFirstLabel().incrementF();
+			newCons.getLastLabel().incrementL();
 		}
 		this.constituents.add(index, newCons);
-		newCons.getFirstLabel().incrementF();
-		newCons.getLastLabel().incrementL();
 	}
 	
 	/**

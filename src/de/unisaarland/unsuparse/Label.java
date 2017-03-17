@@ -10,9 +10,9 @@ import java.util.HashMap;
 public class Label {
 	private String name;
 	private double freq; // Frequency in the corpus
-	private double startFreq; // Frequency of token at the beginning of sentences
-	private double endFreq; // Frequency of token at the end of sentences
-	private HashMap<String,Double> bigramFreqs; // Contains frequencies of this token preceding other tokens
+	private double startFreq; // Frequency of label at the beginning of sentences
+	private double endFreq; // Frequency of label at the end of sentences
+	private HashMap<String,Double> bigramFreqs; // Contains frequencies of this label preceding other labels
 	private int f; // number of constituents with this label at the first position
 	private int l; // number of constituents with this label at the last position
 	
@@ -32,22 +32,22 @@ public class Label {
 	}
 	
 	/**
-	 * Returns frequency of this word/pos preceding the word/pos defined by tokenName.
+	 * Returns frequency of this word/pos preceding the word/pos defined by labelName.
 	 * 
-	 * @param tokenName
+	 * @param labelName
 	 * @return bigram frequency 
 	 */
-	public double getBigramFreq(String tokenName) {
-		if (this.bigramFreqs.containsKey(tokenName)) {
-			return this.bigramFreqs.get(tokenName);
+	public double getBigramFreq(String labelName) {
+		if (this.bigramFreqs.containsKey(labelName)) {
+			return this.bigramFreqs.get(labelName);
 		} else {
 			return 0.1;
 		}
 	}
 	
-	public void incrementBigramFreq(String tokenName) {
-		double currentFreq = this.getBigramFreq(tokenName);
-		this.bigramFreqs.put(tokenName, currentFreq + 1);
+	public void incrementBigramFreq(String labelName) {
+		double currentFreq = this.getBigramFreq(labelName);
+		this.bigramFreqs.put(labelName, currentFreq + 1);
 	}
 
 	public double getStartFreq() {
@@ -91,10 +91,10 @@ public class Label {
 	 */
 	public double pref() {
 		Double exp = (double) (this.f - this.l);
-		if (exp > 50) {
+		if (exp > 50) { // this in necessary to avoid numbers going to infinity
 			exp = 50.0;
 		}
-		if (exp < -50) {
+		if (exp < -50) { // this in necessary to avoid the preference value being zero
 			exp = -50.0;
 		}
 		Double res = Math.pow(2, exp);
