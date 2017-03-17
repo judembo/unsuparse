@@ -5,92 +5,94 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.ArrayList;
 
+/**
+ * Defines a corpus.
+ * 
+ * @author Julia Dembowski
+ *
+ */
 public class Corpus {
 	private int size; // number of tokens
 	private int sentenceCount; // number of sentences
-	private boolean usePos;
-	private HashMap<String,Label> labelMap;
-	private LinkedList<Sentence> sentences;
+	private HashMap<String,Label> labelMap; // maps string representations to their corresponding labels
+	private ArrayList<Sentence> sentences;
 	
+	/**
+	 * A Corpus needs to be initialised with the corpus file and 
+	 * a boolean specifying whether parsing should be performed on POS tags or words.
+	 * 
+	 * @param filename
+	 * @param usePos
+	 * @throws IOException
+	 */
 	public Corpus(String filename, boolean usePos) throws IOException {
-		this.usePos = usePos;
 		this.size = 0;
+		this.sentenceCount = 0;
+		this.labelMap = new HashMap<String,Label>(); 
+		this.sentences = new ArrayList<Sentence>();
 		this.buildCorpus(filename, usePos);
 	}
 	
+	/**
+	 * Reads the corpus file and builds the corpus.
+	 * 
+	 * @param filename
+	 * @param usePos
+	 * @throws IOException
+	 */
 	private void buildCorpus(String filename, boolean usePos) throws IOException {
+		Pattern punct = Pattern.compile("\\p{Punct}");
+		
 		BufferedReader br = null;
+		int column;
+		if (usePos) {
+			column = 1;
+		} else {
+			column = 0;
+		}
 		
 		try{
 			br = new BufferedReader(new FileReader(filename));
 			String line;
-			String[] tokens;
+			Sentence s = new Sentence();
 			while ((line = br.readLine()) != null){
-				tokens = line.split("\\s");
-				Sentence s = new Sentence();
-				for (int i = 0; i < tokens.length; i++) {
-					this.size += 1;
-					String token = tokens[i];
+				if (line.equals("")) { // new sentence
+					ConstituentTree prev = s.getLast();
+					if (prev != null && isPunct(prev.getRawText(),punct)) {
+						s.removeLast();
+					}
+					if (s.length() > 0) {
+						s.getLast().getLastLabel().incrementEndFreq();
+						this.sentences.add(s);
+						this.sentenceCount += 1;
+						this.size += s.length();
+						s = new Sentence();
+					}	
+				} else {
+					String[] fields = line.trim().split("\\s+");
+					String word = fields[0];
+					String wordLabel = fields[column]; // can be word itself or POS, depending on mode
 					Label label;
-					if (usePos) {
-						String[] fields = token.split("_");
-						String word;
-						String pos;
-						if (fields.length == 1) {
-							// Original token was "_"
-							word = "_";
-							pos = fields[0];
-						} else {
-							word = fields[0];
-							pos = fields[1];
-						}
-						
-						
-						s.addTag(pos);
-						s.addWord(word);
-						
-						if (this.labelMap.containsKey(pos)) {
-							label = this.labelMap.get(pos);
-						} else {
-							label = new Label(pos);
-							this.labelMap.put(pos, label);
-						}
+					if (this.labelMap.containsKey(wordLabel)) {
+						label = this.labelMap.get(wordLabel);
 					} else {
-						s.addWord(token);
-						
-						if (this.labelMap.containsKey(token)) {
-							label = this.labelMap.get(token);
-						} else {
-							label = new Label(token);
-							this.labelMap.put(token, label);
-						}
-						
-					}
-					label.incrementFreq();
-					if (i == 0) {
-						label.incrementStartFreq();
-					}
-					if (i == tokens.length-1) {
-						label.incrementEndFreq();
-					} else {
-						String nextToken = tokens[i+1];
-						if (usePos) {
-							String[] fields = nextToken.split("_");
-							if (fields.length == 1) {
-								nextToken = "_";
-							} else {
-								nextToken = fields[0];
-							}
-						}
-						label.incrementBigramFreq(nextToken);
+						label = new Label(wordLabel);
+						this.labelMap.put(wordLabel, label);
 					}
 					
-				}
-				if (s.length() > 0) {
-					this.sentences.add(s);
-					this.sentenceCount += 1;
+					label.incrementFreq();
+					ConstituentTree prev = s.getLast();
+					if (prev == null) {
+						label.incrementStartFreq();
+					} else {
+						prev.getLastLabel().incrementBigramFreq(wordLabel);
+					}
+					
+					s.addWord(label, word);	
 				}
 			}		
 		} catch (FileNotFoundException e) {
@@ -102,6 +104,11 @@ public class Corpus {
 		}
 	}
 	
+	private boolean isPunct(String text, Pattern p) {
+		Matcher m = p.matcher(text);
+		return m.matches();
+	}
+	
 	public int getSize() {
 		return this.size;
 	}
@@ -110,7 +117,7 @@ public class Corpus {
 		return this.sentenceCount;
 	}
 	
-	public LinkedList<Sentence> getSentences() {
+	public ArrayList<Sentence> getSentences() {
 		return this.sentences;
 	}
 	

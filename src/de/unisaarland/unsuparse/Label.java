@@ -3,25 +3,27 @@ package de.unisaarland.unsuparse;
 import java.util.HashMap;
 
 /**
+ * A Label can either represent a word or a POS-tag, depending on the mode used.
  * 
  * @author Julia Dembowski
- * 
- * A Label can either represent a word or a POS-tag, depending on the mode used.
- *
  */
 public class Label {
 	private String name;
-	private int freq; // Frequency in the corpus
-	private int startFreq; // Frequency of token at the beginning of sentences
-	private int endFreq; // Frequency of token at the end of sentences
-	private HashMap<String,Integer> bigramFreqs; // Contains frequencies of this token preceding other tokens
+	private double freq; // Frequency in the corpus
+	private double startFreq; // Frequency of token at the beginning of sentences
+	private double endFreq; // Frequency of token at the end of sentences
+	private HashMap<String,Double> bigramFreqs; // Contains frequencies of this token preceding other tokens
+	private int f; // number of constituents with this label at the first position
+	private int l; // number of constituents with this label at the last position
 	
 	public Label(String name) {
 		this.name = name;
-		this.freq = 0;
-		this.startFreq = 0;
-		this.endFreq = 0;
-		this.bigramFreqs = new HashMap<String,Integer>();
+		this.freq = 0.1;
+		this.startFreq = 0.1;
+		this.endFreq = 0.1;
+		this.bigramFreqs = new HashMap<String,Double>();
+		this.f = 0;
+		this.l = 0;
 	}
 	
 
@@ -30,23 +32,25 @@ public class Label {
 	}
 	
 	/**
-	 * @param tokenName	name of the following token
-	 * @return frequency of this word/pos preceding the word/pos defined by tokenName
+	 * Returns frequency of this word/pos preceding the word/pos defined by tokenName.
+	 * 
+	 * @param tokenName
+	 * @return bigram frequency 
 	 */
-	public int getBigramFreq(String tokenName) {
+	public double getBigramFreq(String tokenName) {
 		if (this.bigramFreqs.containsKey(tokenName)) {
 			return this.bigramFreqs.get(tokenName);
 		} else {
-			return 0;
+			return 0.1;
 		}
 	}
 	
 	public void incrementBigramFreq(String tokenName) {
-		int currentFreq = this.getBigramFreq(tokenName);
+		double currentFreq = this.getBigramFreq(tokenName);
 		this.bigramFreqs.put(tokenName, currentFreq + 1);
 	}
 
-	public int getStartFreq() {
+	public double getStartFreq() {
 		return this.startFreq;
 	}
 
@@ -54,7 +58,7 @@ public class Label {
 		this.startFreq += 1;
 	}
 
-	public int getEndFreq() {
+	public double getEndFreq() {
 		return this.endFreq;
 	}
 
@@ -63,13 +67,38 @@ public class Label {
 	}
 
 
-	public int getFreq() {
+	public double getFreq() {
 		return this.freq;
 	}
 
 
 	public void incrementFreq() {
 		this.freq += 1;
+	}
+	
+	public void incrementF() {
+		this.f += 1;
+	}
+	
+	public void incrementL() {
+		this.l += 1;
+	}
+	
+	/**
+	 * Returns preference of this label to be the first element in a constituent.
+	 * 
+	 * @return preference value 
+	 */
+	public double pref() {
+		Double exp = (double) (this.f - this.l);
+		if (exp > 50) {
+			exp = 50.0;
+		}
+		if (exp < -50) {
+			exp = -50.0;
+		}
+		Double res = Math.pow(2, exp);
+		return res;
 	}
 
 }
