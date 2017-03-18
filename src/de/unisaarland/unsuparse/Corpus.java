@@ -94,7 +94,18 @@ public class Corpus {
 					
 					s.addWord(label, word);	
 				}
-			}		
+			}	
+			// Add last sentence
+			ConstituentTree prev = s.getLast();
+			if (prev != null && isPunct(prev.getRawText(),punct)) {
+				s.removeLast();
+			}
+			if (s.length() > 0) {
+				s.getLast().getLastLabel().incrementEndFreq();
+				this.sentences.add(s);
+				this.sentenceCount += 1;
+				this.size += s.length();
+			}
 		} catch (FileNotFoundException e) {
 		    e.printStackTrace();
 		} catch (IOException e) {
